@@ -1,0 +1,82 @@
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.5.js"></script>
+    <title>WebRTC Demo</title>
+    <style>
+        h1,#id-show {
+            text-align: center;
+        }
+        .video:nth-child(1) {
+            width: 350px;
+            height: 265px;
+            margin:10px;
+            border-style: solid;
+        }
+         .video:nth-child(2) {
+            width: 350px;
+            height: 265px;
+            margin:10px;
+            border-style: solid;
+        }
+        #call-video {
+            display: flex;
+            justify-content: center;
+        }
+        #their-id {
+            margin-right: 10px;
+        }
+        .video-show {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Demo</h1>
+    <div id="id-show">自分のID: <span id="my-id"></span></div>
+    <div id="call-video">
+        <input id="their-id" placeholder="相手のIDを入力"></input>
+        <button id="make-call">Call</button>
+    </div>
+    <div class="video-show">
+        <video class="video" id="my-video" autoplay muted playsinline></video>
+        <video class="video" id="their-video" autoplay muted playsinline></video>
+    </div>
+    <script>
+        let localStream;
+        navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
+            const videoElm = document.getElementById('my-video');
+            videoElm.srcObject = stream;
+            videoElm.play();
+            localStream = stream;
+        }).catch(error => {
+            console.error(error);
+            return;
+        })
+        const peer = new Peer({
+            key: 'Your API Key',
+        });
+        peer.on('open', () => {
+            document.getElementById('my-id').textContent = peer.id;
+        });
+        document.getElementById('make-call').onclick = () => {
+            const theirID = document.getElementById('their-id').value;
+            const mediaConnection = peer.call(theirID, localStream);
+            setEventListener(mediaConnection);
+        };
+        const setEventListener = mediaConnection => {
+            mediaConnection.on('stream', stream => {
+                const videoElm = document.getElementById('their-video')
+                videoElm.srcObject = stream;
+                videoElm.play();
+            });
+        }
+        peer.on('call', mediaConnection => {
+            mediaConnection.answer(localStream);
+            setEventListener(mediaConnection);
+        });
+    </script>
+</body>
+</html>
